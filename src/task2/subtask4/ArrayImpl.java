@@ -1,11 +1,12 @@
 package task2.subtask4;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class ArrayImpl<T> implements Array {
     public static void main(String[] args) {
-        ArrayImpl<Object> array = new ArrayImpl<>();
-        array.add(new String("e1rtw"));
+        ArrayImpl<Integer> array = new ArrayImpl<>();
+        array.add("e1rtw");
         array.add(255);
         array.add(355);
         array.add(null);
@@ -20,21 +21,37 @@ public class ArrayImpl<T> implements Array {
         array.remove(4);
         System.out.println(array);
 
+        Iterator iterator = array.iterator();
+
+
     }
 
     private Object[] objects = new Object[10];
     private int nextIndex = 0;
 
-    public static class IteratorImpl<T> implements Iterator<T> {
+    private class IteratorImpl implements Iterator<T> {
+
+        int cursor;
+        int lastReturned = -1;
+
+        private IteratorImpl() {}
 
         @Override
         public boolean hasNext() {
-            return false;
+            return cursor != nextIndex;
         }
 
         @Override
         public T next() {
-            return null;
+            if (cursor >= nextIndex)
+                throw new NoSuchElementException();
+
+            return (T) objects[lastReturned = cursor++];
+        }
+
+        @Override
+        public void remove() {
+            Iterator.super.remove();
         }
     }
 
@@ -116,7 +133,7 @@ public class ArrayImpl<T> implements Array {
 
     @Override
     public Iterator<Object> iterator() {
-        return null;
+        return (Iterator<Object>) new IteratorImpl();
     }
 
     @Override
