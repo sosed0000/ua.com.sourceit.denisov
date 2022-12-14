@@ -1,3 +1,5 @@
+package tests;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -10,9 +12,9 @@ public class Tests {
         list.add(2);
         list.add(3);
 
-        String[] strings = {"asdfg", "asfgsdh", "qwrfg5"};
-        System.out.println(Arrays.toString(strings));
-        System.out.println(Arrays.toString(strings).replaceAll("[]\\[,]", ""));
+
+        Character ch = 'd';
+
     }
 
 
