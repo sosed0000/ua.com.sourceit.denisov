@@ -16,10 +16,8 @@ public class TextSort {
         text = adaptText(text);
         List<String> sortedWords = sortText(text, letter);
         sortedWords.forEach(System.out :: println);
-
-
-
     }
+
     //Метод видаляє усі символи, що не є літерами латинської абетки, та зайві пробіли.
     public static String adaptText(String text)
     {
@@ -32,13 +30,13 @@ public class TextSort {
         if (text == null || !Character.isLetter(letter))
             return null;
         Comparator<String> comparator = (o1, o2) -> {
-            //Порівняння за кількістю входжень літери
+            //Порівняння за кількістю входжень літери.
             int result;
             result = (int) (
                     o1.chars().filter(ch -> ch == letter).count() -
                     o2.chars().filter(ch -> ch == letter).count()
             );
-            //Якщо кількість входжень літери однакова, то порівняння за абеткою
+            //Якщо кількість входжень літери однакова, то порівняння за абеткою.
             if (result == 0) {
                 result = o1.compareToIgnoreCase(o2);
             }
