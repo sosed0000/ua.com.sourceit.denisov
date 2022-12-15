@@ -1,6 +1,6 @@
 package task3.subtask2;
 
-public class TextEncryption {
+public class TextEncryptor {
 
     public static void main(String[] args) {
         String text = "0123456789abcdefg";
