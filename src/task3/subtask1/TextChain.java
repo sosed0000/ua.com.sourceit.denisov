@@ -11,12 +11,14 @@ public class TextChain {
     //    System.out.println(isNoWordsWithTheSameFirstLetter(text));
         List<String> words = Arrays.asList(text.toLowerCase().split(" "));
         //Цикл змінює слово з якого буде починатися будуватися ланцюг
-        for (int i = 0; i < words.size(); i++) {
+        for (int i = 0; i < words.size(); i++)
+        {
             List<String> wordsToChain = new ArrayList<>(words); // копіюємо колекцію, що б не зруйнувати оригінальну
             String startWord = wordsToChain.get(i);             // слово з якого починается ланцюг
             StringBuilder chain = new StringBuilder(startWord); // ланцюг
 
-            while (true) {
+            while (true)
+            {
                 wordsToChain.remove(startWord); //видаляємо стартове слово з колекції
                 String foundNext = null;         //наступне слово
                 for (String word : wordsToChain) {

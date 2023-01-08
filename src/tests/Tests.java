@@ -1,24 +1,22 @@
 package tests;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class Tests {
     public static void main(String[] args) {
-        List<String> list = new ArrayList<>();
-        list.add("0");
-        list.add("1");
-        list.add("2");
-        list.add("3");
-        System.out.println(list.remove(0));
+        ConcurrentMap<Integer, String> map = new ConcurrentHashMap<>();
+        map.put(1, "sss");
+        map.put(2, "eee");
+        map.put(3, "eee");
+        map.put(4, "eee");
+        map.put(5, "eee");
+        map.remove(7);
+        Integer[] codes = new Integer[map.size()];
+        List<Integer> list = map.keySet().stream().toList();
+        System.out.println(list);
 
-        String text = "sdfv asrg dfg dfhj fguj" ;
-        List<String> words = new ArrayList<>(Arrays.asList(text.split(" ")));
-        //List<String> words = Arrays.asList(text.split(" "));
-        System.out.println(words.remove(0));
-
-        Character ch = 'd';
 
     }
 
