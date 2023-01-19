@@ -1,4 +1,4 @@
-package task5;
+package task5.subtask1;
 
 import java.io.IOException;
 import java.nio.file.Files;
