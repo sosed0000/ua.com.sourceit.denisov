@@ -7,16 +7,9 @@ import java.util.concurrent.ConcurrentMap;
 
 public class Tests {
     public static void main(String[] args) {
-        Path path = Path.of("D:\\233");
-        System.out.println(path);
-        path = Path.of("D:\\233\\");
-        System.out.println(path);
-        path = Path.of("D:/233");
-        System.out.println(path);
-        path = Path.of("D:/233/");
-        System.out.println(path);
-        path = path.resolve("data.txt");
-        System.out.println(path);
+        int i = 0;
+        int j = 0;
+        System.out.println(i++ == j++);
 
     }
 
