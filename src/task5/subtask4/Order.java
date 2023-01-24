@@ -7,8 +7,8 @@ import java.util.Map;
 
 public class Order{
     private int ID;
-    private Date orderDate;
-    private Map<Integer, Integer> items;
+    private Date date;
+    private final Map<Integer, Integer> items;
 
     public Order() {
         items = new HashMap<>();
@@ -32,12 +32,12 @@ public class Order{
         this.ID = ID;
     }
 
-    public Date getOrderDate() {
-        return orderDate;
+    public Date getDate() {
+        return date;
     }
 
-    public void setOrderDate(Date orderDate) {
-        this.orderDate = orderDate;
+    public void setDate(Date date) {
+        this.date = date;
     }
 
     @Override
