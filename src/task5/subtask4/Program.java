@@ -20,7 +20,7 @@ public class Program {
 
     public static void main(String[] args) {
 
-        createTestDB(); //Create and fill test DB with dbName name
+//        createTestDB(); //Create and fill test DB with dbName name
 
         try (DBConnector connector = new DBConnector(url, dbName, userName, password)) {
             DBAccess dbAccess = new DBAccess(connector.getConnection());
@@ -77,6 +77,17 @@ public class Program {
                 for (String query : queries) {
                     statement.execute(query);
                 }
+
+                //create procedures
+                statement.execute("DROP procedure IF EXISTS `orderTotal`");
+                statement.execute("CREATE PROCEDURE `orderTotal`(orderID INT(8), OUT total FLOAT) " +
+                        "BEGIN " +
+                        "SELECT SUM(item_price * item_quantity) " +
+                        "FROM order_item " +
+                        "JOIN item ON order_item.item_id = item.item_id " +
+                        "WHERE order_item.order_id = orderID; " +
+                        "END");
+
             }
         } catch (IOException | SQLException e) {
             throw new RuntimeException(e);

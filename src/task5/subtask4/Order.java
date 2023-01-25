@@ -8,19 +8,19 @@ import java.util.Map;
 public class Order{
     private int ID;
     private Date date;
-    private final Map<Integer, Integer> items;
+    private final Map<Item, Integer> items;
 
     public Order() {
         items = new HashMap<>();
     }
-    public Order(Map<Integer, Integer> items) {
+    public Order(Map<Item, Integer> items) {
         this.items = items;
     }
-    public void addItem(int itemID, int itemQty){
-        items.put(itemID, itemQty);
+    public void addItem(Item item, int itemQty){
+        items.put(item, itemQty);
     }
 
-    public Map<Integer, Integer> getItems() {
+    public Map<Item, Integer> getItems() {
         return items;
     }
 
