@@ -4,8 +4,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class DBConnector {
-    private static final String DRIVER_NAME   = "com.mysql.cj.jdbc.Driver";
+public class DBConnector implements AutoCloseable {
+    private static final String DRIVER_NAME = "com.mysql.cj.jdbc.Driver";
     private final String url;
     private final String dbName;
     private final String userName;
@@ -19,7 +19,7 @@ public class DBConnector {
         this.dbName = dbName;
         this.userName = userName;
         this.password = password;
-        connectionString =  url + dbName + "?user=" + userName + "&password=" + password;
+        connectionString = url + dbName + "?user=" + userName + "&password=" + password;
     }
 
     public DBConnector(String url, String userName, String password) {
@@ -30,25 +30,24 @@ public class DBConnector {
         connectionString = null;
     }
 
-    public Connection getConnection(){
+    public Connection getConnection() throws SQLException {
         try {
             Class.forName(DRIVER_NAME);
-            if (connectionString != null) {
-                connection = DriverManager.getConnection(connectionString);
-            } else {
-                connection = DriverManager.getConnection(url, userName, password);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        if (connectionString != null) {
+            connection = DriverManager.getConnection(connectionString);
+        } else {
+            connection = DriverManager.getConnection(url, userName, password);
         }
         return connection;
     }
-    public void close(){
-        try {
-            connection.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+
+    @Override
+    public void close() throws SQLException {
+        connection.close();
     }
+
 
 }
