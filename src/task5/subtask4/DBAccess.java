@@ -54,6 +54,8 @@ public class DBAccess {
             statement.close();
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+
         }
 
     }
