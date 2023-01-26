@@ -39,23 +39,25 @@ public class DBAccess {
             System.out.println(line);
             do {
                 String itemName = resultSet.getString("item_name");
-                if (itemName.length() > 15) {
+                if (!resultSet.wasNull() && itemName.length() > 15) {
                     itemName = itemName.substring(0, 15);
                 }
                 String itemDescription = resultSet.getString("item_description");
-                if (itemDescription.length() > 30) {
+                if (resultSet.wasNull()) {
+                    itemDescription = "";
+                } else if (itemDescription.length() > 30) {
                     itemDescription = itemDescription.substring(0, 30);
                 }
                 System.out.printf("| %-15s | %5s | %6.2f | %8.2f | %-30s |%n",
                         itemName, resultSet.getInt("item_quantity"), resultSet.getFloat("item_price"), resultSet.getFloat("sum"), itemDescription);
             } while (resultSet.next());
-            System.out.println(line);
 
+            System.out.println(line);
             callableStatement.setInt(1, orderID);
             callableStatement.registerOutParameter(2, Types.FLOAT);
             resultSet = callableStatement.executeQuery();
             resultSet.next();
-            double total = resultSet.getFloat(1);
+            double total = resultSet.getFloat("total");
             System.out.printf("TOTAL:%39.2f%n", total);
             System.out.println();
             resultSet.close();
@@ -68,15 +70,17 @@ public class DBAccess {
 
     public void printOrdersNotMoreThanTotalAndQtyItems(double total, int itemsQuantity) {
         System.out.printf("%nprintOrdersNotMoreThanTotalAndQtyItems(total = %f, itemsQuantity = %d) executing...%n", total, itemsQuantity);
-        try {
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(
-                    "SELECT orders.order_id,  COUNT(item.item_name) AS count_item, SUM(item_price * item_quantity) AS total " +
-                            "FROM orders " +
-                            "JOIN order_item ON orders.order_id = order_item.order_id " +
-                            "JOIN item ON order_item.item_id = item.item_id " +
-                            "GROUP BY orders.order_id " +
-                            "HAVING total <= " + total + " AND count_item  = " + itemsQuantity);
+        String query
+                = "SELECT orders.order_id,  COUNT(item.item_name) AS count_item, SUM(item_price * item_quantity) AS total " +
+                "FROM orders " +
+                "JOIN order_item ON orders.order_id = order_item.order_id " +
+                "JOIN item ON order_item.item_id = item.item_id " +
+                "GROUP BY orders.order_id " +
+                "HAVING total <= ? AND count_item  = ?";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setDouble(1, total);
+            statement.setInt(2, itemsQuantity);
+            ResultSet resultSet = statement.executeQuery();
             if (!resultSet.next()) {
                 System.out.println("No matches");
                 return;
@@ -86,13 +90,12 @@ public class DBAccess {
             String line = "---------------------------------------------------------------";
             System.out.println(line);
             do {
-                System.out.printf("ORDER #%08d%n", resultSet.getInt(1));
+                System.out.printf("ORDER #%08d%n", resultSet.getInt("orders.order_id"));
             } while (resultSet.next());
             resultSet.close();
             System.out.println(line);
             System.out.println();
             resultSet.close();
-            statement.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -100,15 +103,16 @@ public class DBAccess {
 
     public void printTodayOrdersWithoutItem(int itemID) {
         System.out.printf("%nprintTodayOrdersWithoutItem(itemID = %d) executing...%n", itemID);
-        try {
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(
-                    "SELECT  orders.order_id, order_date, SUM(item_id = " + itemID + ") AS find_item " +
-                            "FROM orders " +
-                            "JOIN order_item ON orders.order_id = order_item.order_id " +
-                            "WHERE order_date = '" + (new SimpleDateFormat("yyyy-MM-dd")).format(new Date()) + "' " +
-                            "GROUP BY orders.order_id " +
-                            "HAVING find_item = 0");
+        String query = "SELECT  orders.order_id, SUM(item_id = ?) AS find_item " +
+                "FROM orders " +
+                "JOIN order_item ON orders.order_id = order_item.order_id " +
+                "WHERE order_date = ? " +
+                "GROUP BY orders.order_id " +
+                "HAVING find_item = 0";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, itemID);
+            statement.setDate(2, java.sql.Date.valueOf((new SimpleDateFormat("yyyy-MM-dd")).format(new Date())));
+            ResultSet resultSet = statement.executeQuery();
             if (!resultSet.next()) {
                 System.out.println("No matches");
                 return;
@@ -123,7 +127,6 @@ public class DBAccess {
             System.out.println(line);
             System.out.println();
             resultSet.close();
-            statement.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -144,17 +147,22 @@ public class DBAccess {
     public Map<Item, Integer> getItemsFromOrdersByDate(Date date) {
         Map<Integer, Integer> itemsIdAndQty = new HashMap<>();
         Map<Item, Integer> items = new HashMap<>();
-        try {
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(
-                    "SELECT  item_id, item_quantity " +
-                            "FROM orders " +
-                            "JOIN order_item ON orders.order_id = order_item.order_id " +
-                            "WHERE order_date = '" + (new SimpleDateFormat("yyyy-MM-dd")).format(date) + "' " +
-                            "ORDER BY orders.order_id ");
+        String query
+                = "SELECT  item_id, item_quantity " +
+                "FROM orders " +
+                "JOIN order_item ON orders.order_id = order_item.order_id " +
+                "WHERE order_date = ? " +
+                "ORDER BY orders.order_id ";
+        String query1 = "SELECT  item_id, item_name, item_description, item_price " +
+                "FROM item " +
+                "WHERE item_id IN (?)";
+        try (PreparedStatement statement = connection.prepareStatement(query);
+             PreparedStatement statement1 = connection.prepareStatement(query1)) {
+            statement.setDate(1, java.sql.Date.valueOf((new SimpleDateFormat("yyyy-MM-dd")).format(date)));
+            ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                int itemID = resultSet.getInt(1);
-                int itemQty = resultSet.getInt(2);
+                int itemID = resultSet.getInt("item_id");
+                int itemQty = resultSet.getInt("item_quantity");
                 if (itemsIdAndQty.computeIfPresent(itemID, (k, v) -> v += itemQty) == null) {
                     itemsIdAndQty.put(itemID, itemQty);
                 }
@@ -165,19 +173,15 @@ public class DBAccess {
             }
             Set<Integer> itemsID = itemsIdAndQty.keySet();
             Set<Item> itemSet = new HashSet<>();
-            resultSet = statement.executeQuery(
-                    "SELECT  item_id, item_name, item_description, item_price " +
-                            "FROM item " +
-                            "WHERE item_id IN " + Arrays.toString(itemsID.toArray()).replaceFirst("\\[", "(").replace("]", ")"));
+            statement1.setNString(1, Arrays.toString(itemsID.toArray()).replaceFirst("\\[", "").replace("]", ""));
+            resultSet = statement1.executeQuery();
             while (resultSet.next()) {
-                itemSet.add(new Item(resultSet.getInt(1), resultSet.getString(2), resultSet.getString(3), resultSet.getFloat(4)));
+                itemSet.add(new Item(resultSet.getInt("item_id"), resultSet.getString("item_name"), resultSet.getString("item_description"), resultSet.getFloat("item_price")));
             }
             for (Item item : itemSet) {
                 items.put(item, itemsIdAndQty.get(item.getId()));
             }
-
             resultSet.close();
-            statement.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -186,9 +190,9 @@ public class DBAccess {
 
 
     public void putOrderToDB(Order order) {
-        try {
-            PreparedStatement prepareStatement = connection.prepareStatement(
-                    "INSERT INTO orders (order_date) VALUES (?)", new String[]{"order_id"});
+        try (PreparedStatement prepareStatement = connection.prepareStatement(
+                "INSERT INTO orders (order_date) VALUES (?)", new String[]{"order_id"});
+             Statement statement = connection.createStatement()) {
             prepareStatement.setDate(1, java.sql.Date.valueOf((new SimpleDateFormat("yyyy-MM-dd")).format(new Date())));
             prepareStatement.executeUpdate();
             ResultSet resultSet = prepareStatement.getGeneratedKeys();
@@ -199,12 +203,11 @@ public class DBAccess {
                 throw new SQLException("Can't get orderID");
             }
             order.setID(orderID);
-            Statement statement = connection.createStatement();
-            resultSet = statement.executeQuery("SELECT order_date FROM orders WHERE order_id =" + orderID);
+            resultSet = statement.executeQuery(String.format("SELECT order_date FROM orders WHERE order_id = %d", orderID));
             if (!resultSet.next()) {
                 throw new SQLException("Can't get order date");
             }
-            order.setDate(resultSet.getDate(1));
+            order.setDate(resultSet.getDate("order_date"));
             putOrderItemsToDB(order);
             resultSet.close();
             statement.close();
@@ -218,10 +221,13 @@ public class DBAccess {
     private void putOrderItemsToDB(Order order) {
         int orderID = order.getID();
         for (Map.Entry<Item, Integer> entry : order.getItems().entrySet()) {
-            try {
-                Statement statement = connection.createStatement();
-                statement.execute("INSERT INTO order_item (order_id, item_id, item_quantity)" +
-                        "VALUES (" + orderID + ", " + entry.getKey().getId() + ", " + entry.getValue() + ")");
+            String query
+                    = "INSERT INTO order_item (order_id, item_id, item_quantity)" +
+                    "VALUES (?, ?, ?)";
+            try (PreparedStatement statement = connection.prepareStatement(query)) {
+                statement.setInt(1, orderID);
+                statement.setInt(2, entry.getKey().getId());
+                statement.setInt(3, entry.getValue());
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -231,7 +237,7 @@ public class DBAccess {
     public void deleteOrdersWithItemsCount(int itemsCount) {
         System.out.printf("%ndeleteOrdersWithItemsCount(itemsCount = %d) executing...%n", itemsCount);
         Set<Integer> ordersID = findOrdersWithItemsCount(itemsCount);
-        if (ordersID.size() == 0){
+        if (ordersID.size() == 0) {
             System.out.println("No orders to delete");
             return;
         }
@@ -240,18 +246,19 @@ public class DBAccess {
 
     private Set<Integer> findOrdersWithItemsCount(int itemsCount) {
         Set<Integer> orders = new HashSet<>();
-        try {
-            Statement statement = connection.createStatement();
-            ResultSet rs = statement.executeQuery("SELECT orders.order_id " +
-                    "FROM orders " +
-                    "LEFT JOIN order_item ON orders.order_id = order_item.order_id " +
-                    "GROUP BY order_id " +
-                    "HAVING COUNT(item_id) = " + itemsCount);
+        String query
+                = "SELECT orders.order_id " +
+                "FROM orders " +
+                "LEFT JOIN order_item ON orders.order_id = order_item.order_id " +
+                "GROUP BY order_id " +
+                "HAVING COUNT(item_id) = ?";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, itemsCount);
+            ResultSet rs = statement.executeQuery();
             while (rs.next()) {
-                orders.add(rs.getInt(1));
+                orders.add(rs.getInt("orders.order_id"));
             }
             rs.close();
-            statement.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -259,11 +266,8 @@ public class DBAccess {
     }
 
     private void deleteOrderByID(int orderID) {
-        try {
-            Statement statement = connection.createStatement();
-            statement.execute("DELETE FROM orders WHERE (order_id = " + orderID + ")");
-            statement.execute("DELETE FROM order_item WHERE (order_id = " + orderID + ")");
-            statement.close();
+        try (Statement statement = connection.createStatement()) {
+            statement.execute(String.format("DELETE FROM orders WHERE (order_id = %d)", orderID));
             System.out.printf("ORDER #%08d successfully deleted from DB%n", orderID);
         } catch (SQLException e) {
             e.printStackTrace();
