@@ -20,14 +20,18 @@ public class Program {
 
     public static void main(String[] args) {
 
-      //  createTestDB(); //Create and fill test DB with dbName name
+        createTestDB(); //Create and fill test DB with dbName name
 
         try (DBConnector connector = new DBConnector(url, dbName, userName, password)) {
             DBAccess dbAccess = new DBAccess(connector.getConnection());
 
+            dbAccess.createTestOrder(2);
+            dbAccess.createTestOrder(4);
+            dbAccess.createTestOrder(0);
+
             dbAccess.printOrderInfoByID(3);
             dbAccess.printOrdersNotMoreThanTotalAndQtyItems(900, 1);
-            dbAccess.printTodayOrdersWithoutItem(6);
+            dbAccess.printTodayOrdersWithoutItem(1);
             dbAccess.createOrderWithAllTodayItems();
             dbAccess.deleteOrdersWithItemsCount(0);
 
@@ -39,6 +43,7 @@ public class Program {
     }
 
     public static void createTestDB() {
+        System.out.println("Creating Test DB...");
         String fileSeparator = FileSystems.getDefault().getSeparator();
         File sqlFilesPath;
         try {
@@ -92,6 +97,9 @@ public class Program {
         } catch (IOException | SQLException e) {
             throw new RuntimeException(e);
         }
-
+        System.out.println("Test DB created successfully");
+        System.out.println();
     }
+
+
 }

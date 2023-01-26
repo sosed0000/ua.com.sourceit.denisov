@@ -12,17 +12,9 @@ import java.util.concurrent.ConcurrentMap;
 
 public class Tests {
     public static void main(String[] args) throws IOException {
-        Map<Integer, Integer> map = new HashMap<>();
-        map.put(1, 1);
-        map.put(2, 2);
-        map.put(3, 3);
-        map.put(4, 4);
-        map.put(5, 5);
-        Set<Integer> k = map.keySet();
-
-        String s = Arrays.toString(k.toArray()).replaceFirst("\\[", "(").replace("]", ")");
-        System.out.println(s);
-
+        System.out.println((int) (Math.random() * 10 + 1));
+        Date date = null;
+        System.out.println(java.sql.Date.valueOf((new SimpleDateFormat("yyyy-MM-dd")).format(date)));
     }
 
 
