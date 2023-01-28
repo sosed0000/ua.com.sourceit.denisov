@@ -216,9 +216,12 @@ public class DBAccess {
 
     public void addOrderToDB(Order order) {
         assert (order != null);
-        try (PreparedStatement prepareStatement = connection.prepareStatement("INSERT INTO orders (order_date) VALUES (?)"
+        try (PreparedStatement prepareStatement = connection.prepareStatement(
+                "INSERT INTO orders (order_date) VALUES (?)"
                 , new String[]{"order_id"});
              Statement statement = connection.createStatement()) {
+
+            connection.setAutoCommit(false);
             prepareStatement.setDate(1, java.sql.Date.valueOf((new SimpleDateFormat("yyyy-MM-dd")).format(new Date())));
             prepareStatement.executeUpdate();
             ResultSet resultSet = prepareStatement.getGeneratedKeys();
@@ -237,26 +240,32 @@ public class DBAccess {
             addOrderItemsToDB(order);
             resultSet.close();
             System.out.printf("%s successfully added to DB%n%n", order);
+            connection.commit();
+            connection.setAutoCommit(true);
         } catch (SQLException e) {
+            try {
+                connection.rollback();
+                System.out.println("Transaction failed");
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
             e.printStackTrace();
         }
     }
 
-    private void addOrderItemsToDB(Order order) {
+    private void addOrderItemsToDB(Order order) throws SQLException {
         assert (order != null);
         int orderID = order.getID();
         for (Map.Entry<Item, Integer> entry : order.getItems().entrySet()) {
             String query
                     = "INSERT INTO order_item (order_id, item_id, item_quantity)" +
                     "VALUES (?, ?, ?)";
-            try (PreparedStatement statement = connection.prepareStatement(query)) {
-                statement.setInt(1, orderID);
-                statement.setInt(2, entry.getKey().getId());
-                statement.setInt(3, entry.getValue());
-                statement.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, orderID);
+            statement.setInt(2, entry.getKey().getId());
+            statement.setInt(3, entry.getValue());
+            statement.executeUpdate();
+
         }
     }
 
@@ -306,11 +315,8 @@ public class DBAccess {
         List<Integer> itemsInDB = getAllItemsIdFromDB();
         Set<Integer> itemsInOrder = new HashSet<>();
         int itemsCount = itemsInDB.size();
-        for (int i = 0; i < itemsInOrderCount; i++) {
+        while (itemsInOrder.size() < itemsInOrderCount) {
             itemsInOrder.add(itemsInDB.get((int) (Math.random() * itemsCount)));
-            if (itemsInOrder.size() < itemsInOrderCount) {
-                i--;
-            }
         }
         Set<Item> itemSet = getItemsFromDB(itemsInOrder);
         HashMap<Item, Integer> orderItems = new HashMap<>();

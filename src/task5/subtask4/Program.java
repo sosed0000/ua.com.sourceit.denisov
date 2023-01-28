@@ -31,7 +31,7 @@ public class Program {
 
             dbAccess.printOrderInfoByID(3);
             dbAccess.printOrdersNotMoreThanTotalAndQtyItems(900, 1);
-            dbAccess.printTodayOrdersWithoutItem(1);
+            dbAccess.printTodayOrdersWithoutItem(6);
             dbAccess.createOrderWithAllTodayItems();
             dbAccess.deleteOrdersWithItemsCount(0);
 
